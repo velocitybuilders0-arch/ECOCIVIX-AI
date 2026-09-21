@@ -43,6 +43,24 @@ export async function analyzeIssueApi(
     }
     throw new Error(message);
   } catch (err) {
+    console.log("[API] Analysis request failed:", err);
+    
+    // Only use fallback for network errors, not server errors
+    if (err instanceof Error && (err.message.includes("fetch") || err.message.includes("network"))) {
+      console.warn('[api] backend unreachable — using offline fallback');
+      return {
+        priority: "MEDIUM",
+        confidence: 0.5,
+        modelVersion: "offline-fallback",
+        labelScores: { LOW: 0.25, MEDIUM: 0.5, HIGH: 0.15, CRITICAL: 0.1 },
+        aiAnalysis: null,
+        llmAvailable: false,
+        analyzedAt: new Date().toISOString(),
+        isFallback: true,
+        provider: "client-side-rule-fallback",
+      };
+    }
+    
     if (err instanceof Error) throw err;
     throw new Error("The analysis service is unavailable. Start the ML and server services and try again.");
   }
