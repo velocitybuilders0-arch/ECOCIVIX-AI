@@ -13,7 +13,8 @@ import { Colors } from "../theme/colors";
 import { Header } from "../components/Header";
 import { PriorityBadge, StatusBadge } from "../components/Badge";
 import { CivicIssue, ScreenType } from "../types";
-import { fetchIssuesApi } from "../services/api";
+import { fetchIssuesApi, isOfflineFallbackActive } from "../services/api";
+import { TEST_MACRO_F1_LABEL } from "../constants/modelMetrics";
 
 interface DashboardScreenProps {
   onNavigate: (screen: ScreenType, issueId?: string) => void;
@@ -62,9 +63,18 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) 
           <View style={styles.mlHeader}>
             <View style={styles.mlBadge}>
               <View style={styles.liveDot} />
-              <Text style={styles.mlBadgeText}>DISTILBERT ML v1.0 ONLINE</Text>
+              <Text style={styles.mlBadgeText}>
+                {isOfflineFallbackActive() ? "OFFLINE FALLBACK" : "DISTILBERT ML v1.0 ONLINE"}
+              </Text>
             </View>
-            <Text style={styles.confidenceText}>94.8% Val F1</Text>
+            <View style={styles.metricStatusRow}>
+              {isOfflineFallbackActive() && (
+                <View style={styles.offlinePill}>
+                  <Text style={styles.offlinePillText}>OFFLINE DEMO</Text>
+                </View>
+              )}
+              <Text style={styles.confidenceText}>{TEST_MACRO_F1_LABEL}</Text>
+            </View>
           </View>
           <Text style={styles.heroTitle}>Smart Municipal Triage</Text>
           <Text style={styles.heroSub}>
@@ -190,6 +200,24 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: Colors.primary,
     letterSpacing: 0.5,
+  },
+  metricStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  offlinePill: {
+    backgroundColor: "rgba(251, 191, 36, 0.15)",
+    borderWidth: 1,
+    borderColor: Colors.medium,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    marginRight: 6,
+  },
+  offlinePillText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: Colors.medium,
   },
   confidenceText: {
     fontSize: 12,

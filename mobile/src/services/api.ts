@@ -4,6 +4,12 @@ import { CivicIssue, DualAIAnalysisResult, IssueStatus, PriorityLevel, IssueCate
 // Default to standard local dev IP or loopback.
 const API_BASE_URL = "http://localhost:3000/api/issues";
 
+let offlineFallbackActive = false;
+
+export function isOfflineFallbackActive(): boolean {
+  return offlineFallbackActive;
+}
+
 // In-memory demo store for seamless offline/standalone demo experience
 let mockIssuesStore: CivicIssue[] = [
   {
@@ -135,11 +141,14 @@ export async function analyzeIssueApi(
     });
 
     if (res.ok) {
+      offlineFallbackActive = false;
       return (await res.json()) as DualAIAnalysisResult;
     }
   } catch (err) {
     console.log("[API] Server unreachable, using high-fidelity local AI pipeline simulator:", err);
   }
+
+  offlineFallbackActive = true;
 
   // High-fidelity fallback / standalone demo response:
   const text = `${title} ${description}`.toLowerCase();
@@ -193,7 +202,7 @@ export async function analyzeIssueApi(
   return {
     priority,
     confidence,
-    modelVersion: "v1.0.0-distilbert",
+    modelVersion: "offline-fallback",
     labelScores: baseScores,
     aiAnalysis: {
       category,
@@ -208,6 +217,8 @@ export async function analyzeIssueApi(
     },
     llmAvailable: true,
     analyzedAt: new Date().toISOString(),
+    isFallback: true,
+    provider: "client-side-rule-fallback",
   };
 }
 

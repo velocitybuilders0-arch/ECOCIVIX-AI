@@ -33,6 +33,8 @@ export interface AIAnalysis {
   safetyRisk?: "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
   safetyReason?: string;
   suggestedAction?: string;
+  isFallback?: boolean;
+  provider?: string;
 }
 
 export interface DualAIAnalysisResult {
@@ -48,6 +50,8 @@ export interface DualAIAnalysisResult {
   aiAnalysis?: AIAnalysis | null;
   llmAvailable: boolean;
   analyzedAt: string;
+  isFallback?: boolean;
+  provider?: string;
 }
 
 export interface CivicIssue {

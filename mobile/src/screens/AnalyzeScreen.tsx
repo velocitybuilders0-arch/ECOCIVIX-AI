@@ -68,6 +68,15 @@ export const AnalyzeScreen: React.FC<AnalyzeScreenProps> = ({
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {(analysis.isFallback || analysis.aiAnalysis?.isFallback) && (
+          <View style={styles.fallbackBanner}>
+            <Ionicons name="warning-outline" size={18} color={Colors.medium} style={{ marginRight: 8 }} />
+            <Text style={styles.fallbackBannerText}>
+              Offline demo mode - priority simulated locally. Trained model not contacted.
+            </Text>
+          </View>
+        )}
+
         {/* ML Priority Gauge Card */}
         <View style={styles.mlGaugeCard}>
           <View style={styles.badgeRow}>
@@ -203,6 +212,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 36,
+  },
+  fallbackBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(251, 191, 36, 0.15)",
+    borderWidth: 1,
+    borderColor: Colors.medium,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  fallbackBannerText: {
+    flex: 1,
+    color: Colors.textPrimary,
+    fontSize: 13,
+    fontWeight: "700",
   },
   mlGaugeCard: {
     backgroundColor: Colors.card,

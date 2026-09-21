@@ -76,7 +76,16 @@ export const ReportIssueScreen: React.FC<ReportIssueScreenProps> = ({
     setAnalyzing(true);
     try {
       const result = await analyzeIssueApi(title, description, location);
-      onAnalysisReady(result, { title, description, location });
+      const continueToAnalysis = () => onAnalysisReady(result, { title, description, location });
+      if (result.isFallback || result.aiAnalysis?.isFallback) {
+        Alert.alert(
+          "Offline demo mode",
+          "Priority simulated locally. Trained model not contacted.",
+          [{ text: "Continue", onPress: continueToAnalysis }]
+        );
+      } else {
+        continueToAnalysis();
+      }
     } catch (err: any) {
       Alert.alert("Analysis Error", err.message || "Could not analyze issue.");
     } finally {

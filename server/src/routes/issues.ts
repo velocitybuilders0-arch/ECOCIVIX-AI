@@ -91,6 +91,7 @@ issuesRouter.post("/analyze", async (req: Request, res: Response) => {
     aiAnalysis: llmAnalysis,
     llmAvailable: !llmFailed,
     analyzedAt: new Date().toISOString(),
+    isFallback: llmAnalysis?.isFallback ?? false,
   });
 });
 
