@@ -4,6 +4,9 @@
 server/node_modules/
 server/dist/
 server/.env
+.env
+.env.local
+.env.*.local
 
 # Python / ML Service artifacts
 __pycache__/
@@ -11,6 +14,8 @@ __pycache__/
 .pytest_cache/
 ml-service/models/*
 !ml-service/models/.gitkeep
+ml-service/.env
+mobile/.env
 
 # System & IDE files
 .DS_Store
