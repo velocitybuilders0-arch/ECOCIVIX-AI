@@ -33,22 +33,19 @@ export async function analyzeIssueApi(
     if (res.ok) {
       return (await res.json()) as DualAIAnalysisResult;
     }
-  } catch (err) {
-    console.log("[API] Analysis request failed:", err);
-  }
 
-  console.warn('[api] backend unreachable — using offline fallback');
-  return {
-    priority: "MEDIUM",
-    confidence: 0.5,
-    modelVersion: "offline-fallback",
-    labelScores: { LOW: 0.25, MEDIUM: 0.5, HIGH: 0.15, CRITICAL: 0.1 },
-    aiAnalysis: null,
-    llmAvailable: false,
-    analyzedAt: new Date().toISOString(),
-    isFallback: true,
-    provider: "client-side-rule-fallback",
-  };
+    let message = `Analysis request failed with status ${res.status}.`;
+    try {
+      const errorBody = await res.json();
+      if (typeof errorBody?.error === "string") message = errorBody.error;
+    } catch {
+      // Keep the status-based message when the server response is not JSON.
+    }
+    throw new Error(message);
+  } catch (err) {
+    if (err instanceof Error) throw err;
+    throw new Error("The analysis service is unavailable. Start the ML and server services and try again.");
+  }
 }
 
 /**

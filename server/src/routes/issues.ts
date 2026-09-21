@@ -81,19 +81,15 @@ issuesRouter.post("/analyze", async (req: Request, res: Response) => {
     console.warn("[ECOCIVIX] LLM analysis failed — returning ML-only result:", llmErr);
   }
 
-  if (llmAnalysis?.isFallback) {
-    return res.status(503).json({
-      error: "Contextual AI analysis unavailable. No simulated analysis was returned.",
-    });
-  }
-
+  // Always return the analysis (whether from Gemini or fallback classifier)
+  // The mobile client uses the isFallback flag to show appropriate UI
   return res.status(200).json({
     // Core ML output (the real trained model)
     priority: mlResult.priority,
     confidence: mlResult.confidence,
     modelVersion: mlResult.modelVersion,
     labelScores: mlResult.labelScores,
-    // LLM contextual analysis (second AI layer)
+    // LLM contextual analysis (second AI layer - includes fallback if Gemini failed)
     aiAnalysis: llmAnalysis,
     llmAvailable: !llmFailed,
     analyzedAt: new Date().toISOString(),
