@@ -18,7 +18,7 @@ import { submitIssueApi } from "../services/api";
 
 interface AnalyzeScreenProps {
   analysis: DualAIAnalysisResult;
-  formData: { title: string; description: string; location: string };
+  formData: { title: string; description: string; location: string; imageUri?: string };
   onBack: () => void;
   onSubmitSuccess: (newIssueId: string) => void;
 }
@@ -38,6 +38,7 @@ export const AnalyzeScreen: React.FC<AnalyzeScreenProps> = ({
         title: formData.title,
         description: formData.description,
         locationContext: formData.location,
+        imageUrl: formData.imageUri,
         mlPriority: analysis.priority,
         mlConfidence: analysis.confidence,
         mlModelVersion: analysis.modelVersion,
@@ -68,11 +69,11 @@ export const AnalyzeScreen: React.FC<AnalyzeScreenProps> = ({
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {(analysis.isFallback || analysis.aiAnalysis?.isFallback) && (
+        {analysis.isFallback && (
           <View style={styles.fallbackBanner}>
             <Ionicons name="warning-outline" size={18} color={Colors.medium} style={{ marginRight: 8 }} />
             <Text style={styles.fallbackBannerText}>
-              Offline demo mode - priority simulated locally. Trained model not contacted.
+              Offline demo mode — priority simulated locally. Trained model not contacted.
             </Text>
           </View>
         )}

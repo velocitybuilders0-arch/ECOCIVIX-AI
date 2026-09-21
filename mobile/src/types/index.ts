@@ -75,8 +75,10 @@ export interface CivicIssue {
 }
 
 export type ScreenType =
+  | "LOGIN"
   | "ONBOARDING"
   | "DASHBOARD"
+  | "STAFF"
   | "REPORT"
   | "ANALYZE"
   | "MY_ISSUES"

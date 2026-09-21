@@ -11,8 +11,10 @@ import { z } from "zod";
 import { analyzeIssue } from "../ai/aiEngine.js";
 import { callMLService, checkMLHealth } from "../ml/mlClient.js";
 import { supabase } from "../db/supabaseClient.js";
+import { AuthenticatedRequest, requireAdmin, requireAuth } from "../authMiddleware.js";
 
 export const issuesRouter = Router();
+issuesRouter.use(requireAuth);
 
 // --------------------------------------------------------------------------
 // Validation schemas
@@ -23,7 +25,6 @@ const AnalyzeBodySchema = z.object({
   locationContext: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
 });
-
 const SubmitIssueSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().min(5).max(2000),
@@ -39,7 +40,6 @@ const SubmitIssueSchema = z.object({
   // LLM analysis (sent from client after analysis)
   aiAnalysis: z.record(z.unknown()).optional(),
 });
-
 const StatusUpdateSchema = z.object({
   status: z.enum(["OPEN", "ACKNOWLEDGED", "IN_PROGRESS", "RESOLVED", "CLOSED"]),
   adminNote: z.string().optional(),
@@ -81,6 +81,12 @@ issuesRouter.post("/analyze", async (req: Request, res: Response) => {
     console.warn("[ECOCIVIX] LLM analysis failed — returning ML-only result:", llmErr);
   }
 
+  if (llmAnalysis?.isFallback) {
+    return res.status(503).json({
+      error: "Contextual AI analysis unavailable. No simulated analysis was returned.",
+    });
+  }
+
   return res.status(200).json({
     // Core ML output (the real trained model)
     priority: mlResult.priority,
@@ -117,7 +123,7 @@ issuesRouter.post("/", async (req: Request, res: Response) => {
         image_url: data.imageUrl ?? null,
         latitude: data.latitude ?? null,
         longitude: data.longitude ?? null,
-        citizen_id: data.citizenId ?? "anonymous",
+        citizen_id: (req as AuthenticatedRequest).authUser?.id,
         ml_priority: data.mlPriority,
         ml_confidence: data.mlConfidence,
         ml_model_version: data.mlModelVersion,
@@ -141,7 +147,9 @@ issuesRouter.post("/", async (req: Request, res: Response) => {
 // List issues — supports ?citizenId=xxx and ?status=OPEN filters
 // --------------------------------------------------------------------------
 issuesRouter.get("/", async (req: Request, res: Response) => {
-  const { citizenId, status, limit = "20", offset = "0" } = req.query;
+  const { status, limit = "20", offset = "0" } = req.query;
+  const request = req as AuthenticatedRequest;
+  const isOperationsUser = request.authUser?.app_metadata?.role === "admin" || request.authUser?.app_metadata?.role === "staff";
 
   let query = supabase
     .from("issues")
@@ -149,7 +157,7 @@ issuesRouter.get("/", async (req: Request, res: Response) => {
     .order("created_at", { ascending: false })
     .range(Number(offset), Number(offset) + Number(limit) - 1);
 
-  if (citizenId) query = query.eq("citizen_id", String(citizenId));
+  if (!isOperationsUser) query = query.eq("citizen_id", request.authUser?.id ?? "");
   if (status) query = query.eq("status", String(status));
 
   const { data, error } = await query;
@@ -168,6 +176,8 @@ issuesRouter.get("/", async (req: Request, res: Response) => {
 // --------------------------------------------------------------------------
 issuesRouter.get("/:id", async (req: Request, res: Response) => {
   const { id } = req.params;
+  const request = req as AuthenticatedRequest;
+  const isOperationsUser = request.authUser?.app_metadata?.role === "admin" || request.authUser?.app_metadata?.role === "staff";
 
   const { data, error } = await supabase
     .from("issues")
@@ -179,6 +189,10 @@ issuesRouter.get("/:id", async (req: Request, res: Response) => {
     return res.status(404).json({ error: "Issue not found" });
   }
 
+  if (!isOperationsUser && data.citizen_id !== request.authUser?.id) {
+    return res.status(404).json({ error: "Issue not found" });
+  }
+
   return res.status(200).json({ issue: data });
 });
 
@@ -186,7 +200,7 @@ issuesRouter.get("/:id", async (req: Request, res: Response) => {
 // PATCH /api/issues/:id/status
 // Admin status update
 // --------------------------------------------------------------------------
-issuesRouter.patch("/:id/status", async (req: Request, res: Response) => {
+issuesRouter.patch("/:id/status", requireAdmin, async (req: Request, res: Response) => {
   const { id } = req.params;
   const parsed = StatusUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -216,3 +230,4 @@ issuesRouter.patch("/:id/status", async (req: Request, res: Response) => {
 
   return res.status(200).json({ message: "Status updated", issue: data });
 });
+

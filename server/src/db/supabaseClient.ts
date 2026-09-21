@@ -8,15 +8,15 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseKey) {
   console.warn(
-    "[Supabase] SUPABASE_URL or SUPABASE_ANON_KEY not set. Database operations will fail."
+    "[Supabase] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set. Database operations will fail."
   );
 }
 
 export const supabase = createClient(
   supabaseUrl ?? "http://localhost:54321",
-  supabaseAnonKey ?? "placeholder"
+  supabaseKey ?? "placeholder"
 );

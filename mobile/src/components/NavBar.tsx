@@ -7,10 +7,11 @@ import { ScreenType } from "../types";
 interface NavBarProps {
   currentScreen: ScreenType;
   onNavigate: (screen: ScreenType) => void;
+  role: "citizen" | "staff" | "admin";
 }
 
-export const NavBar: React.FC<NavBarProps> = ({ currentScreen, onNavigate }) => {
-  if (currentScreen === "ONBOARDING" || currentScreen === "ANALYZE") {
+export const NavBar: React.FC<NavBarProps> = ({ currentScreen, onNavigate, role }) => {
+  if (currentScreen === "LOGIN" || currentScreen === "ONBOARDING" || currentScreen === "ANALYZE") {
     return null;
   }
 
@@ -23,12 +24,17 @@ export const NavBar: React.FC<NavBarProps> = ({ currentScreen, onNavigate }) => 
     { key: "DASHBOARD", label: "Overview", icon: "grid-outline", activeIcon: "grid" },
     { key: "REPORT", label: "Report", icon: "add-circle-outline", activeIcon: "add-circle" },
     { key: "MY_ISSUES", label: "My Issues", icon: "list-outline", activeIcon: "list" },
+    { key: "STAFF", label: "Staff Queue", icon: "clipboard-outline", activeIcon: "clipboard" },
     { key: "ADMIN", label: "City Ops", icon: "shield-checkmark-outline", activeIcon: "shield-checkmark" },
   ];
+  const visibleTabs = tabs.filter((tab) =>
+    (tab.key !== "STAFF" || role === "staff" || role === "admin") &&
+    (tab.key !== "ADMIN" || role === "admin")
+  );
 
   return (
     <View style={styles.container}>
-      {tabs.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = currentScreen === tab.key;
         return (
           <TouchableOpacity

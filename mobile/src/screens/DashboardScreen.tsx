@@ -13,7 +13,7 @@ import { Colors } from "../theme/colors";
 import { Header } from "../components/Header";
 import { PriorityBadge, StatusBadge } from "../components/Badge";
 import { CivicIssue, ScreenType } from "../types";
-import { fetchIssuesApi, isOfflineFallbackActive } from "../services/api";
+import { fetchIssuesApi } from "../services/api";
 import { TEST_MACRO_F1_LABEL } from "../constants/modelMetrics";
 
 interface DashboardScreenProps {
@@ -23,14 +23,17 @@ interface DashboardScreenProps {
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) => {
   const [issues, setIssues] = useState<CivicIssue[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
     try {
       const data = await fetchIssuesApi();
       setIssues(data);
+      setIsOfflineMode(false);
     } catch (err) {
       console.error(err);
+      setIsOfflineMode(true);
     } finally {
       setLoading(false);
     }
@@ -63,13 +66,12 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onNavigate }) 
           <View style={styles.mlHeader}>
             <View style={styles.mlBadge}>
               <View style={styles.liveDot} />
-              <Text style={styles.mlBadgeText}>
-                {isOfflineFallbackActive() ? "OFFLINE FALLBACK" : "DISTILBERT ML v1.0 ONLINE"}
-              </Text>
+              <Text style={styles.mlBadgeText}>DISTILBERT ML v1.0 ONLINE</Text>
             </View>
             <View style={styles.metricStatusRow}>
-              {isOfflineFallbackActive() && (
+              {isOfflineMode && (
                 <View style={styles.offlinePill}>
+                  <Ionicons name="cloud-offline-outline" size={12} color={Colors.medium} style={{ marginRight: 4 }} />
                   <Text style={styles.offlinePillText}>OFFLINE DEMO</Text>
                 </View>
               )}
@@ -205,24 +207,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  offlinePill: {
-    backgroundColor: "rgba(251, 191, 36, 0.15)",
-    borderWidth: 1,
-    borderColor: Colors.medium,
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    marginRight: 6,
-  },
-  offlinePillText: {
-    fontSize: 9,
-    fontWeight: "800",
-    color: Colors.medium,
-  },
   confidenceText: {
     fontSize: 12,
     fontWeight: "700",
     color: Colors.secondary,
+  },
+  offlinePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(251, 191, 36, 0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  offlinePillText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: Colors.medium,
+    letterSpacing: 0.3,
   },
   heroTitle: {
     fontSize: 22,

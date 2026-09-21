@@ -9,8 +9,10 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { Colors } from "../theme/colors";
 import { Header } from "../components/Header";
 import { DualAIAnalysisResult } from "../types";
@@ -20,32 +22,9 @@ interface ReportIssueScreenProps {
   onBack: () => void;
   onAnalysisReady: (
     analysis: DualAIAnalysisResult,
-    formData: { title: string; description: string; location: string }
+    formData: { title: string; description: string; location: string; imageUri?: string }
   ) => void;
 }
-
-const PRESET_ISSUES = [
-  {
-    title: "Live electrical spark and dangling wire from transformer",
-    description: "Transformer near bus stop is buzzing loudly with blue sparks, wire is within reach of sidewalk.",
-    location: "Bus Stop 12, MG Road",
-  },
-  {
-    title: "Major sewage overflow into public marketplace",
-    description: "Manhole lid displaced, raw wastewater flooding pedestrian market stalls creating severe health risk.",
-    location: "Central Market South Gate",
-  },
-  {
-    title: "Huge pile of uncollected garbage and medical waste",
-    description: "Discarded plastic packaging, rotten food waste and clinic refuse dumped on vacant plot for 5 days.",
-    location: "Behind Sector 9 Community Center",
-  },
-  {
-    title: "Dangerous pothole cave-in near school zone",
-    description: "Deep cavity formed after rain, cars and school buses are bottoming out.",
-    location: "School Lane Road Cross",
-  },
-];
 
 export const ReportIssueScreen: React.FC<ReportIssueScreenProps> = ({
   onBack,
@@ -55,12 +34,34 @@ export const ReportIssueScreen: React.FC<ReportIssueScreenProps> = ({
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("Sector 14 Civic Zone (Auto GPS)");
   const [analyzing, setAnalyzing] = useState(false);
-  const [hasPhoto, setHasPhoto] = useState(false);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
 
-  const handleApplyPreset = (preset: typeof PRESET_ISSUES[0]) => {
-    setTitle(preset.title);
-    setDescription(preset.description);
-    setLocation(preset.location);
+  const selectPhoto = async (source: "camera" | "library") => {
+    const permission = source === "camera"
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert("Permission required", `Allow ${source === "camera" ? "camera" : "photo library"} access to attach evidence.`);
+      return;
+    }
+
+    const result = source === "camera"
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const handlePhotoPress = () => {
+    Alert.alert("Attach visual evidence", "Choose an image source", [
+      { text: "Camera", onPress: () => selectPhoto("camera") },
+      { text: "Photo library", onPress: () => selectPhoto("library") },
+      ...(photoUri ? [{ text: "Remove photo", style: "destructive" as const, onPress: () => setPhotoUri(null) }] : []),
+      { text: "Cancel", style: "cancel" as const },
+    ]);
   };
 
   const handleRunAnalysis = async () => {
@@ -76,12 +77,15 @@ export const ReportIssueScreen: React.FC<ReportIssueScreenProps> = ({
     setAnalyzing(true);
     try {
       const result = await analyzeIssueApi(title, description, location);
-      const continueToAnalysis = () => onAnalysisReady(result, { title, description, location });
-      if (result.isFallback || result.aiAnalysis?.isFallback) {
+      const continueToAnalysis = () => onAnalysisReady(result, { title, description, location, imageUri: photoUri ?? undefined });
+      if (result.isFallback) {
         Alert.alert(
-          "Offline demo mode",
-          "Priority simulated locally. Trained model not contacted.",
-          [{ text: "Continue", onPress: continueToAnalysis }]
+          "Offline Demo Mode",
+          "The backend is unreachable. Using local simulation for priority. Submit anyway?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Submit Anyway", onPress: continueToAnalysis }
+          ]
         );
       } else {
         continueToAnalysis();
@@ -98,26 +102,6 @@ export const ReportIssueScreen: React.FC<ReportIssueScreenProps> = ({
       <Header title="Report Issue" subtitle="Dual AI Pipeline Classifier" showBack onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Quick Demo Fill Buttons */}
-        <View style={styles.demoSection}>
-          <Text style={styles.demoLabel}>Demo Quick Fill Scenarios:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.presetScroll}>
-            {PRESET_ISSUES.map((preset, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={styles.presetChip}
-                onPress={() => handleApplyPreset(preset)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="flash-outline" size={12} color={Colors.primary} style={{ marginRight: 4 }} />
-                <Text style={styles.presetText} numberOfLines={1}>
-                  {preset.title.split(" ")[0]} {preset.title.split(" ")[1]}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
         {/* Issue Title Input */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>
@@ -175,21 +159,21 @@ export const ReportIssueScreen: React.FC<ReportIssueScreenProps> = ({
           </View>
         </View>
 
-        {/* Photo Attachment Simulation */}
+        {/* Photo Attachment */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Visual Evidence / Photo</Text>
           <TouchableOpacity
-            style={[styles.photoCard, hasPhoto && styles.photoCardActive]}
-            onPress={() => setHasPhoto(!hasPhoto)}
+            style={[styles.photoCard, photoUri && styles.photoCardActive]}
+            onPress={handlePhotoPress}
             activeOpacity={0.8}
           >
-            <Ionicons
-              name={hasPhoto ? "checkmark-circle" : "camera-outline"}
-              size={24}
-              color={hasPhoto ? Colors.primary : Colors.textMuted}
-            />
-            <Text style={[styles.photoText, hasPhoto && styles.photoTextActive]}>
-              {hasPhoto ? "Photo Attached (evidence.jpg)" : "Attach Photo / Camera Capture"}
+            {photoUri ? (
+              <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+            ) : (
+              <Ionicons name="camera-outline" size={24} color={Colors.textMuted} />
+            )}
+            <Text style={[styles.photoText, photoUri && styles.photoTextActive]}>
+              {photoUri ? "Photo attached - tap to change" : "Take a photo or choose from library"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -239,25 +223,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  presetScroll: {
-    flexDirection: "row",
-  },
-  presetChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    marginRight: 8,
-  },
-  presetText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: Colors.textPrimary,
-  },
   inputGroup: {
     marginBottom: 20,
   },
@@ -272,6 +237,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.textPrimary,
     marginBottom: 8,
+  },
+  photoPreview: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    marginRight: 12,
   },
   required: {
     color: Colors.critical,
