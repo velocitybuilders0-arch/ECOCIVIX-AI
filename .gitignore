@@ -1,0 +1,17 @@
+# ECOCIVIX AI Root GitIgnore
+
+# Server build & node_modules
+server/node_modules/
+server/dist/
+server/.env
+
+# Python / ML Service artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+ml-service/models/*
+!ml-service/models/.gitkeep
+
+# System & IDE files
+.DS_Store
+*.log
