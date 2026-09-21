@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { PublicLayout } from './layouts/PublicLayout';
-import { AuthLayout } from './layouts/AuthLayout';
 import { AppLayout } from './layouts/AppLayout';
 
 // Public pages
@@ -59,8 +58,8 @@ function App() {
             <Route path="/features" element={<PublicLayout><Features /></PublicLayout>} />
 
             {/* Auth routes */}
-            <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
-            <Route path="/signup" element={<AuthLayout><Signup /></AuthLayout>} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
             {/* Citizen routes */}
             <Route

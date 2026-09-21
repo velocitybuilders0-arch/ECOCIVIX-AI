@@ -1,6 +1,5 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import type { User, AuthState, LoginCredentials, SignupCredentials } from '../types/auth';
-import { authService } from '../services/api/auth';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
@@ -20,9 +19,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
+    const role = localStorage.getItem('user_role') as 'citizen' | 'staff' | 'admin' | null;
+    
     if (token) {
+      const mockUser: User = {
+        id: 'mock-user-id',
+        email: 'user@ecocivix.local',
+        name: 'User',
+        role: role || 'citizen',
+        createdAt: new Date().toISOString(),
+      };
+      
       setAuthState({
-        user: null,
+        user: mockUser,
         token,
         isAuthenticated: true,
         isLoading: false,
@@ -40,11 +49,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     try {
-      const session = await authService.login(credentials);
-      localStorage.setItem('auth_token', session.token);
+      // TODO: Integrate with actual auth service
+      // For now, simulate successful login
+      const mockToken = 'mock-token-' + Date.now();
+      const mockRole = 'citizen';
+      
+      localStorage.setItem('auth_token', mockToken);
+      localStorage.setItem('user_role', mockRole);
+      
+      const mockUser: User = {
+        id: 'mock-user-id',
+        email: credentials.email,
+        name: 'User',
+        role: mockRole,
+        createdAt: new Date().toISOString(),
+      };
+      
       setAuthState({
-        user: session.user,
-        token: session.token,
+        user: mockUser,
+        token: mockToken,
         isAuthenticated: true,
         isLoading: false,
       });
@@ -57,11 +80,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (credentials: SignupCredentials) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     try {
-      const session = await authService.signup(credentials);
-      localStorage.setItem('auth_token', session.token);
+      // TODO: Integrate with actual auth service
+      // For now, simulate successful signup
+      const mockToken = 'mock-token-' + Date.now();
+      const mockRole = 'citizen';
+      
+      localStorage.setItem('auth_token', mockToken);
+      localStorage.setItem('user_role', mockRole);
+      
+      const mockUser: User = {
+        id: 'mock-user-id',
+        email: credentials.email,
+        name: credentials.name,
+        role: mockRole,
+        createdAt: new Date().toISOString(),
+      };
+      
       setAuthState({
-        user: session.user,
-        token: session.token,
+        user: mockUser,
+        token: mockToken,
         isAuthenticated: true,
         isLoading: false,
       });
@@ -74,11 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     try {
-      await authService.logout();
+      // TODO: Integrate with actual auth service
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_role');
       setAuthState({
         user: null,
         token: null,
