@@ -12,6 +12,9 @@
 - In Project Settings → API, copy:
   - Project URL → `SUPABASE_URL`
   - service_role key → `SUPABASE_SERVICE_ROLE_KEY`
+- In Authentication → Providers, enable Email.
+- Copy the project URL and anon key into `mobile/.env` as
+  `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
 ## 2. Gemini API key (free)
 - Go to https://aistudio.google.com/apikey
@@ -23,7 +26,7 @@
 - `cp server/.env.example server/.env`
 - `cp ml-service/.env.example ml-service/.env`
 - `cp mobile/.env.example mobile/.env`
-- Fill in the values in `server/.env`
+- Fill in the values in `server/.env` and `mobile/.env`
 
 ## 4. Install dependencies
 - `cd server && npm install`
@@ -39,7 +42,8 @@
 - `curl http://localhost:8001/health` → expect `OK`
 - `curl http://localhost:3000/health` → expect ML + Supabase status
 - In the app, report an issue and tap Analyze
-- Expected: real priority, no offline-fallback banner
+- Expected: real priority; if a service is unavailable, the app shows an error and does not fabricate a result.
+- Sign in with a Supabase Auth email/password account before using the app.
 
 ## 7. Running on a physical Android phone
 - Find your laptop's LAN IP: `ipconfig` (Windows) or `ifconfig | grep inet` (macOS/Linux)
