@@ -11,7 +11,7 @@ except ImportError:
     DistilBertTokenizerFast = None
     DistilBertForSequenceClassification = None
 
-MODEL_VERSION = "priority-v0.1.0"
+MODEL_VERSION = "priority-v1.0.0"
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models", MODEL_VERSION)
 LABEL_ORDER = ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 

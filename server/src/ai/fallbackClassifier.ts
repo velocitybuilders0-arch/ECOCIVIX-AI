@@ -32,7 +32,7 @@ export function classifyWithRules(input: IssueInput): RawAIAnalysis {
     text.includes("leak") ||
     text.includes("pipe") ||
     text.includes("sanitation") ||
-    text.includes("overflow")
+    (text.includes("overflow") && (text.includes("water") || text.includes("sewer") || text.includes("drain") || text.includes("tank")))
   ) {
     category = "WATER_SANITATION";
     department = "WATER_SANITATION";

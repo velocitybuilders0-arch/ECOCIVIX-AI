@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { IssueInput } from "./types.js";
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompts.js";
 
@@ -9,7 +9,7 @@ import { SYSTEM_PROMPT, buildUserPrompt } from "./prompts.js";
 export async function callGeminiAPI(
   input: IssueInput,
   apiKey?: string,
-  modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash"
+  modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash"
 ): Promise<string> {
   const key = apiKey || process.env.GEMINI_API_KEY;
 
@@ -17,32 +17,29 @@ export async function callGeminiAPI(
     throw new Error("GEMINI_API_KEY environment variable is not configured.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: key });
+  const genAI = new GoogleGenerativeAI(key);
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    systemInstruction: SYSTEM_PROMPT,
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.2,
+    },
+  });
+
   const userPrompt = buildUserPrompt(input);
 
-  // Set timeout safety net of 8000ms
+  // 8-second timeout safety net
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => reject(new Error("Gemini API call timed out after 8 seconds.")), 8000);
   });
 
   const generatePromise = (async () => {
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: [
-        { role: "user", parts: [{ text: userPrompt }] }
-      ],
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
-        responseMimeType: "application/json",
-        temperature: 0.2,
-      },
-    });
-
-    const text = response.text;
+    const result = await model.generateContent(userPrompt);
+    const text = result.response.text();
     if (!text) {
       throw new Error("Received empty text output from Gemini API.");
     }
-
     return text;
   })();
 
