@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Issue } from '../types/issues';
 import { issuesService } from '../services/api/issues';
+import { mockIssues } from '../services/mock/issues';
 
 export function useIssues(filters?: {
   status?: string;
@@ -16,8 +17,17 @@ export function useIssues(filters?: {
     setLoading(true);
     setError(null);
     try {
-      const response = await issuesService.getIssues(filters);
-      setIssues(response.issues);
+      // Use mock data for development
+      let filtered = mockIssues;
+      
+      if (filters?.citizenId) {
+        filtered = filtered.filter(i => i.citizenId === filters.citizenId);
+      }
+      if (filters?.status) {
+        filtered = filtered.filter(i => i.status === filters.status);
+      }
+      
+      setIssues(filtered);
     } catch (err) {
       setError('Failed to fetch issues');
       console.error(err);

@@ -58,9 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user_role', mockRole);
       
       const mockUser: User = {
-        id: 'mock-user-id',
+        id: 'citizen-1',
         email: credentials.email,
-        name: 'User',
+        name: credentials.email.split('@')[0],
         role: mockRole,
         createdAt: new Date().toISOString(),
       };
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('user_role', mockRole);
       
       const mockUser: User = {
-        id: 'mock-user-id',
+        id: 'citizen-' + Date.now(),
         email: credentials.email,
         name: credentials.name,
         role: mockRole,

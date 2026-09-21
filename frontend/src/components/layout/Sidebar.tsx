@@ -17,16 +17,17 @@ import { useMobile } from '../../hooks/useMobile';
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  userRole?: 'citizen' | 'staff' | 'admin';
 }
 
-export function Sidebar({ isOpen, onToggle }: SidebarProps) {
+export function Sidebar({ isOpen, onToggle, userRole }: SidebarProps) {
   const { user, logout } = useAuth();
   const { isMobile } = useMobile();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/app' },
-    { icon: FileText, label: 'Issues', href: '/app/issues' },
+    { icon: FileText, label: 'My Issues', href: '/app/issues' },
   ];
 
   const roleMenuItems: Record<string, typeof menuItems> = {
@@ -42,7 +43,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
     ],
   };
 
-  const role = user?.role || 'citizen';
+  const role = userRole || user?.role || 'citizen';
   const items = roleMenuItems[role] || menuItems;
 
   return (
@@ -70,6 +71,23 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
             {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </button>
         </div>
+
+        {/* User Info */}
+        {!isCollapsed && user && (
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                <span className="text-primary-600 font-semibold">
+                  {user.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
+                <div className="text-xs text-gray-500 capitalize">{user.role}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">

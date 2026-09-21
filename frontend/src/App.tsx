@@ -28,6 +28,10 @@ import { AdminIssues } from './pages/admin/Issues';
 import { Analytics } from './pages/admin/Analytics';
 import { Users } from './pages/admin/Users';
 
+// Components
+import { IssueDetail } from './components/issues/IssueDetail';
+import { mockIssues } from './services/mock/issues';
+
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) {
   const { isAuthenticated, user, isLoading } = useAuth();
 
@@ -93,6 +97,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/app/issues/:id"
+              element={
+                <ProtectedRoute allowedRoles={['citizen']}>
+                  <AppLayout><IssueDetail issue={mockIssues[0]} role="citizen" /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Staff routes */}
             <Route
@@ -111,6 +123,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/staff/issues/:id"
+              element={
+                <ProtectedRoute allowedRoles={['staff']}>
+                  <AppLayout><IssueDetail issue={mockIssues[0]} role="staff" /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Admin routes */}
             <Route
@@ -126,6 +146,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AppLayout><AdminIssues /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/issues/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AppLayout><IssueDetail issue={mockIssues[0]} role="admin" /></AppLayout>
                 </ProtectedRoute>
               }
             />
